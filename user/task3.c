@@ -21,8 +21,7 @@ int main(int argc, char* argv[]) {
             close(p[1]);
             close(0);
             dup(p[0]);
-            close(p[0]);
-            //read(0, 
+            close(p[0]); 
             char buf[1024];
             int n;
             while (n = read(0, &buf, 1024)) {
