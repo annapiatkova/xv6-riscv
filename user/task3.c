@@ -11,33 +11,65 @@ int main(int argc, char* argv[]) {
         if (pid > 0) {
             close(p[0]);
             for (int i = 0; i < argc; ++i) {
-                write(p[1], argv[i], strlen(argv[i]));
+                int r = write(p[1], argv[i], strlen(argv[i]));
+                if (r < strlen(argv[i])) {
+                    int n = r;
+                    while (n < strlen(argv[i])) {
+                        if (r < 0) {
+                            perror("write error");
+                            exit(1);
+                        }
+                        r = write(p[1], argv[i] + n, strlen(argv[i]) - n);
+                        n += r;
+                    }
+                }
             }
-            write(p[1], "\n", 1);
-            close(p[1]);
+            int r = write(p[1], "\n", 1);
+            while (r < 1) {
+                if (r < 0) {
+                    perror("write error");
+                    exit(1);
+                }
+                r = write(p[1], "\n", 1);
+            }
+            if (close(p[1])) {
+                perror("close error");
+                exit(1);
+            }
             wait((int*) 0);
             exit(0);
         } else if (pid == 0) {
-            close(p[1]);
-            close(0);
-            dup(p[0]);
-            close(p[0]); 
+            if (close(p[1])) {
+                perror("close error");
+                exit(1);
+            }
             char buf[1024];
-            int n;
-            while (n = read(0, &buf, 1024)) {
-                if (n < 0) {
-                    write(2, "read error\n", 11);
-                    exit(-1);
+            int m;
+            while (m = read(p[0], &buf, 1024)) {
+                if (m < 0) {
+                    perror("read error");
+                    exit(1);
                 }
-                write(1, &buf, n);
+                int r = write(1, &buf, m);
+                if (r < m) {
+                    int n = r;
+                    while (n < m) {
+                        if (r < 0) {
+                            perror("write error");
+                            exit(1);
+                        }
+                        r = write(p[1], &buf + n, m - n);
+                        n += r;
+                    }
+                }
             }
             exit(0);
         } else {
-            write(2, "fork error\n", 11);
-            exit(-1);
+            perror("fork error");
+            exit(1);
         }
     } else {
-        write(2, "pipe error\n", 11);
-        exit(-1);
+        perror("pipe error");
+        exit(1);
     }
 }

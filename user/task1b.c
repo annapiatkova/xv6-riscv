@@ -18,6 +18,6 @@ int main() {
         exit(1);
     } else {
         write(2, "fork error\n", 11);
-        exit(-1);
+        exit(1);
     }
 }
