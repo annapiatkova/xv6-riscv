@@ -50,16 +50,18 @@ int main(int argc, char* argv[]) {
                     perror("read error");
                     exit(1);
                 }
-                int r = write(1, &buf, m);
-                if (r < m) {
-                    int n = r;
-                    while (n < m) {
-                        if (r < 0) {
-                            perror("write error");
-                            exit(1);
+                if (m > 0) {
+                    int r = write(1, &buf, m);
+                    if (r < m) {
+                        int n = r;
+                        while (n < m) {
+                            if (r < 0) {
+                                perror("write error");
+                                exit(1);
+                            }
+                            r = write(1, &buf + n, m - n);
+                            n += r;
                         }
-                        r = write(p[1], &buf + n, m - n);
-                        n += r;
                     }
                 }
             }
