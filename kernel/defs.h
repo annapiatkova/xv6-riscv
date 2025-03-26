@@ -2,6 +2,7 @@ struct buf;
 struct context;
 struct file;
 struct inode;
+struct mutex;
 struct pipe;
 struct proc;
 struct spinlock;
@@ -69,6 +70,10 @@ void            initlog(int, struct superblock*);
 void            log_write(struct buf*);
 void            begin_op(void);
 void            end_op(void);
+
+// mutex.c
+int             mutexalloc(struct file **);
+void            mutexclose(struct sleeplock *);
 
 // pipe.c
 int             pipealloc(struct file**, struct file**);
