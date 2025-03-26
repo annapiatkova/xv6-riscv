@@ -305,7 +305,7 @@ fork(void)
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)
     if(p->ofile[i])
-      np->ofile[i] = filedup(p->ofile[i]);
+      np->ofile[i] = filedup(p->ofile[i]); // works for all file types, including mutex
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -355,7 +355,7 @@ exit(int status)
   for(int fd = 0; fd < NOFILE; fd++){
     if(p->ofile[fd]){
       struct file *f = p->ofile[fd];
-      fileclose(f);
+      fileclose(f); // calls mutexclose if file is a mutex
       p->ofile[fd] = 0;
     }
   }

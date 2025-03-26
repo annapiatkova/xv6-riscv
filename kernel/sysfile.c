@@ -76,7 +76,7 @@ sys_read(void)
   argint(2, &n);
   if(argfd(0, 0, &f) < 0)
     return -1;
-  return fileread(f, p, n);
+  return fileread(f, p, n); // returns -1 if file is a mutex
 }
 
 uint64
@@ -91,7 +91,7 @@ sys_write(void)
   if(argfd(0, 0, &f) < 0)
     return -1;
 
-  return filewrite(f, p, n);
+  return filewrite(f, p, n); // returns -1 if file is a mutex
 }
 
 uint64
@@ -103,7 +103,7 @@ sys_close(void)
   if(argfd(0, &fd, &f) < 0)
     return -1;
   myproc()->ofile[fd] = 0;
-  fileclose(f);
+  fileclose(f); // calls mutexclose if file is a mutex
   return 0;
 }
 
@@ -116,7 +116,7 @@ sys_fstat(void)
   argaddr(1, &st);
   if(argfd(0, 0, &f) < 0)
     return -1;
-  return filestat(f, st);
+  return filestat(f, st); // returns -1 if file is a mutex
 }
 
 // Create the path new as a link to the same inode as old.
@@ -501,5 +501,68 @@ sys_pipe(void)
     fileclose(wf);
     return -1;
   }
+  return 0;
+}
+
+uint64
+sys_mutex(void)
+{
+  
+  struct file *f;
+  int fd;
+  struct proc *p = myproc();
+
+  if(mutexalloc(&f) < 0)
+    return -1;
+
+  fd = -1;
+  if((fd = fdalloc(f)) < 0){
+    if(fd >= 0)
+      p->ofile[fd] = 0;
+    fileclose(f);
+    return -1;
+  }
+  return fd;
+}
+
+uint64
+sys_mutex_lock(void)
+{
+  int fd;
+  struct file *f;
+  if(argfd(0, &fd, &f) < 0)
+    return -1;
+    
+  if(f->type != FD_MUTEX)
+    return -1;
+  
+  struct sleeplock *lock;
+  lock = f->mutex;
+  
+  acquiresleep(lock);
+  if (holdingsleep(lock)) {
+    return 0;
+  }
+  return -1;
+}
+
+uint64
+sys_mutex_unlock(void)
+{
+  int fd;
+  struct file *f;
+  if(argfd(0, &fd, &f) < 0)
+    return -1;
+  if(f->type != FD_MUTEX)
+    return -1;
+  
+  struct sleeplock *lock;
+  lock = f->mutex;
+  
+  if (!holdingsleep(lock))
+    return -1;
+  releasesleep(lock);
+  if (holdingsleep(lock))
+    return -1;
   return 0;
 }
