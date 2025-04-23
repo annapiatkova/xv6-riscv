@@ -7,6 +7,7 @@ struct file {
   struct inode *ip;  // FD_INODE and FD_DEVICE
   uint off;          // FD_INODE
   short major;       // FD_DEVICE
+  short minor;       // FD_DEVICE
 };
 
 #define major(dev)  ((dev) >> 16 & 0xFFFF)
@@ -35,6 +36,9 @@ struct devsw {
   int (*write)(int, uint64, int);
 };
 
-extern struct devsw devsw[];
+#define DEVICES_MAX (1 << 16)
+
+extern struct devsw devsw[][DEVICES_MAX];
 
 #define CONSOLE 1
+#define MYDRIVER 2

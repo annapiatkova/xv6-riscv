@@ -335,7 +335,7 @@ sys_open(void)
     }
   }
 
-  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
+  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV || ip->minor < 0 || ip->minor >= DEVICES_MAX)){
     iunlockput(ip);
     end_op();
     return -1;
@@ -352,6 +352,7 @@ sys_open(void)
   if(ip->type == T_DEVICE){
     f->type = FD_DEVICE;
     f->major = ip->major;
+    f->minor = ip->minor;
   } else {
     f->type = FD_INODE;
     f->off = 0;
