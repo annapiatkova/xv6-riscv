@@ -187,6 +187,6 @@ consoleinit(void)
 
   // connect read and write system calls
   // to consoleread and consolewrite.
-  devsw[CONSOLE].read = consoleread;
-  devsw[CONSOLE].write = consolewrite;
+  devsw[CONSOLE][0].read = consoleread;
+  devsw[CONSOLE][0].write = consolewrite;
 }
