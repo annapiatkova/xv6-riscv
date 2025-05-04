@@ -41,4 +41,10 @@ struct devsw {
 extern struct devsw devsw[][DEVICES_MAX];
 
 #define CONSOLE 1
+
 #define MYDRIVER 2
+
+#define NULL_DEVICE     0
+#define ZERO_DEVICE     1
+#define URANDOM_DEVICE  2
+#define NULLSTAT_DEVICE 3

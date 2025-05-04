@@ -22,6 +22,26 @@ main(void)
   }
   dup(0);  // stdout
   dup(0);  // stderr
+  
+  if(open("null_device", O_RDWR) < 0){
+    mknod("null_device", MYDRIVER, NULL_DEVICE);
+    open("null_device", O_RDWR);
+  }
+  
+  if(open("zero_device", O_RDWR) < 0){
+    mknod("zero_device", MYDRIVER, ZERO_DEVICE);
+    open("zero_device", O_RDWR);
+  }
+  
+  if(open("urandom_device", O_RDWR) < 0){
+    mknod("urandom_device", MYDRIVER, URANDOM_DEVICE);
+    open("urandom_device", O_RDWR);
+  }
+  
+  if(open("nullstat_device", O_RDWR) < 0){
+    mknod("nullstat_device", MYDRIVER, NULLSTAT_DEVICE);
+    open("nullstat_device", O_RDWR);
+  }
 
   for(;;){
     printf("init: starting sh\n");

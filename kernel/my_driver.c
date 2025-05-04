@@ -37,13 +37,16 @@ int
 zeroread(int user_dst, uint64 dst, int n)
 {
   int target = n;
-  int buf[1] = {0};
+  int bytes_to_copy = 64;
+  int buf[64] = {};
   while(n > 0){
-    if(either_copyout(user_dst, dst, &buf, 1) == -1)
+    if (n < 64)
+      bytes_to_copy = n;
+    if(either_copyout(user_dst, dst, &buf, bytes_to_copy) == -1)
       break;
 
-    dst++;
-    --n;
+    dst += bytes_to_copy;
+    n -= bytes_to_copy;
   }
   return target - n;
 }
@@ -79,24 +82,24 @@ urandomwrite(int user_src, uint64 src, int n)
 {
   if (n != 1)
     return -1;
-  uint c[1];
+  uint c;
   if(either_copyin(&c, user_src, src, 1) == -1)
     return 0;
   acquire(&urandom.lock);
-  urandom.seed = c[0];
+  urandom.seed = c;
   release(&urandom.lock);
   return 1;
 }
 
 int
 nullstatread(int user_dst, uint64 dst, int n)
-{
+{ 
   if (n != sizeof(uint64))
     return -1;
   acquire(&nullstat.lock);
-  uint64 buf[1] = { nullstat.count };
+  uint64 buf1 = nullstat.count;
   release(&nullstat.lock);
-  if(either_copyout(user_dst, dst, &buf, 1) == -1)
+  if(either_copyout(user_dst, dst, &buf1, 1) == -1)
     return 0;
   return 1;
 }
@@ -110,18 +113,13 @@ nullstatwrite(int user_src, uint64 src, int n)
   return n;
 }
 
-#define NULL_DEVICE     0
-#define ZERO_DEVICE     1
-#define URANDOM_DEVICE  2
-#define NULLSTAT_DEVICE 3
-
 void
 mydriverinit(void)
 {
   initlock(&urandom.lock, "urandom");
   initlock(&nullstat.lock, "nullstat");
   
-  urandom.seed = 0;
+  urandom.seed = 1;
   urandom.a = 48271;
   urandom.c = 0;
   urandom.m = 2147483647;
@@ -130,8 +128,6 @@ mydriverinit(void)
 
   uartinit();
 
-  // connect read and write system calls
-  // to consoleread and consolewrite.
   devsw[MYDRIVER][NULL_DEVICE].read      = nullread;
   devsw[MYDRIVER][NULL_DEVICE].write     = nullwrite;
   devsw[MYDRIVER][ZERO_DEVICE].read      = zeroread;
